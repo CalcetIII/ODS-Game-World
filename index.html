@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ODS Game World: Aventura en Vallverda</title>
+    <style>
+        /* =========================================================
+           ESTILOS GENERALES Y DISEÑO RESPONSIVO (100% AUTOCONTENIDO)
+           ========================================================= */
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: rgba(15, 23, 42, 0.92);
+            --border-color: #334155;
+            --emerald: #10b981;
+            --emerald-light: #34d399;
+            --sky: #38bdf8;
+            --amber: #fbbf24;
+            --rose: #f43f5e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA SUPERIOR (HUD HEADER) */
+        header {
+            background: rgba(15, 23, 42, 0.96);
+            border-bottom: 2px solid var(--border-color);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 30;
+            flex-shrink: 0;
+            gap: 10px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--emerald), var(--sky));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+        }
+
+        .brand-title h1 {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            background: linear-gradient(90deg, var(--emerald-light), var(--sky));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-title p {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lang-switch {
+            display: flex;
+            background: #1e293b;
+            padding: 3px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .lang-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: var(--emerald);
+            color: #022c22;
+        }
+
+        .icon-btn {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 10px;
+            padding: 6px 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: #334155;
+        }
+
+        /* CONTENEDOR PRINCIPAL DEL JUEGO */
+        #game-wrapper {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #14532d;
+        }
+
+        canvas#world-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* HUD FLOTANTE DENTRO DEL JUEGO */
+        .hud-top-left {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 10px 14px;
+            width: 250px;
+            max-width: calc(100vw - 150px);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+            z-index: 10;
+        }
+
+        .hud-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--emerald-light);
+        }
+
+        .sustainability-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: #1e293b;
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            border: 1px solid #334155;
+        }
+
+        .sustainability-bar-fill {
+            height: 100%;
+            width: 20%;
+            background: linear-gradient(90deg, var(--amber), var(--emerald));
+            transition: width 0.5s ease;
+        }
+
+        .quest-list {
+            list-style: none;
+            font-size: 11.5px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .quest-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #e2e8f0;
+            padding: 3px 6px;
+            border-radius: 6px;
+            background: rgba(30, 41, 59, 0.6);
+        }
+
+        .quest-item.done {
+            color: var(--emerald-light);
+            text-decoration: line-through;
+            opacity: 0.75;
+        }
+
+        /* INVENTARIO DE OBJETOS RECOGIDOS */
+        .hud-inventory {
+            position: absolute;
+            bottom: 14px;
+            left: 14px;
+            background: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 14px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .inv-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .inv-slots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .inv-slot {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: #1e293b;
+            border: 1px dashed #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+        }
+
+        .inv-slot.filled {
+            border: 1.5px solid var(--emerald);
+            background: rgba(16, 185, 129, 0.15);
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); }
+            80% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* MINIMAPA ESQUINA SUPERIOR DERECHA */
+        .minimap-box {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 14px;
+            padding: 6px;
+            z-index: 10;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+        }
+
+        #minimap-canvas {
+            display: block;
+            border-radius: 8px;
+            background: #064e3b;
+        }
+
+        .minimap-caption {
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        /* INDICADOR CONTEXTUAL DE INTERACCIÓN */
+        #interact-prompt {
+            position: absolute;
+            bottom: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid var(--amber);
+            color: #fef3c7;
+            padding: 8px 18px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 800;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            z-index: 15;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            animation: bouncePrompt 1.2s infinite;
+        }
+
+        @keyframes bouncePrompt {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, -4px); }
+        }
+
+        /* CONTROLES TÁCTILES / D-PAD + BOTÓN ACCIÓN */
+        .touch-controls {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            align-items: flex-end;
+            gap: 14px;
+            z-index: 20;
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 44px);
+            grid-template-rows: repeat(3, 44px);
+            gap: 4px;
+        }
+
+        .dpad-btn {
+            background: rgba(30, 41, 59, 0.85);
+            border: 2px solid #475569;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .dpad-btn:active, .dpad-btn.pressed {
+            background: var(--emerald);
+            color: #022c22;
+            border-color: var(--emerald-light);
+        }
+
+        .action-btn {
+            height: 64px;
+            padding: 0 18px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--amber), #f59e0b);
+            border: 2px solid #fef08a;
+            color: #451a03;
+            font-weight: 900;
+            font-size: 13px;
+            box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* =========================================================
+           MODALES RPG (INICIO, DIÁLOGO DE MISIÓN Y VICTORIA)
+           ========================================================= */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.82);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 50;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .modal-card {
+            background: #1e293b;
+            border: 2px solid #475569;
+            border-radius: 24px;
+            max-width: 620px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.65);
+            max-height: 92vh;
+            overflow-y: auto;
+        }
+
+        /* Pantalla de Inicio */
+        .start-hero {
+            text-align: center;
+        }
+
+        .badge-ods {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--emerald);
+            color: var(--emerald-light);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 99px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .start-hero h2 {
+            font-size: 26px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .start-hero p {
+            color: #cbd5e1;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .char-selector {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .char-option {
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 16px;
+            padding: 12px 20px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            width: 135px;
+        }
+
+        .char-option.selected {
+            border-color: var(--emerald);
+            background: rgba(16, 185, 129, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .char-avatar-preview {
+            font-size: 36px;
+            margin-bottom: 4px;
+        }
+
+        .char-name {
+            font-size: 13px;
+            font-weight: 800;
+            color: white;
+        }
+
+        .controls-hint {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 18px;
+            border: 1px solid #334155;
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--emerald), #059669);
+            color: #022c22;
+            font-size: 16px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
+            transition: transform 0.15s;
+        }
+
+        .primary-btn:hover {
+            transform: scale(1.02);
+        }
+
+        /* Cuadro de Diálogo RPG */
+        .rpg-dialog-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .npc-portrait {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: #0f172a;
+            border: 2px solid var(--emerald);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .npc-meta .ods-tag {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--amber);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .npc-meta h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+        }
+
+        .rpg-text {
+            font-size: 14.5px;
+            line-height: 1.55;
+            color: #e2e8f0;
+            margin-bottom: 16px;
+            background: #0f172a;
+            padding: 14px;
+            border-radius: 14px;
+            border-left: 4px solid var(--sky);
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .quiz-btn {
+            background: #0f172a;
+            border: 1.5px solid #475569;
+            color: #f8fafc;
+            padding: 12px 14px;
+            border-radius: 12px;
+            text-align: left;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-btn:hover {
+            border-color: var(--emerald);
+            background: rgba(16, 185, 129, 0.12);
+        }
+
+        .quiz-btn.wrong {
+            border-color: var(--rose);
+            background: rgba(244, 63, 94, 0.15);
+            color: #fda4af;
+        }
+
+        .quiz-btn.correct {
+            border-color: var(--emerald);
+            background: rgba(16, 185, 129, 0.22);
+            color: #6ee7b7;
+        }
+
+        .onu-fact-box {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 12.5px;
+            color: #bae6fd;
+            line-height: 1.45;
+        }
+
+        .onu-fact-title {
+            font-weight: 800;
+            color: var(--sky);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        /* Pantalla Final Victoria */
+        .summary-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 16px 0;
+            text-align: left;
+        }
+
+        .summary-list li {
+            background: #0f172a;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            border-left: 4px solid var(--emerald);
+            color: #e2e8f0;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .secondary-btn {
+            flex: 1;
+            min-width: 180px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1.5px solid #475569;
+            background: #0f172a;
+            color: white;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .secondary-btn:hover {
+            background: #334155;
+        }
+
+        /* Toast de notificación rápida */
+        #toast-banner {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(16, 185, 129, 0.95);
+            color: #022c22;
+            font-weight: 800;
+            font-size: 13px;
+            padding: 8px 18px;
+            border-radius: 99px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #toast-banner.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 640px) {
+            .hud-top-left {
+                width: 195px;
+                padding: 8px 10px;
+            }
+            .quest-item {
+                font-size: 10.5px;
+            }
+            .hud-inventory {
+                bottom: 145px;
+                left: 12px;
+                padding: 6px 10px;
+            }
+            .inv-slot {
+                width: 28px;
+                height: 28px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- =========================================================
+         BARRA SUPERIOR (BILINGÜE ES/VA + SONIDO + REINICIAR)
+         ========================================================= -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon">🌍</div>
+            <div class="brand-title">
+                <h1>ODS GAME WORLD</h1>
+                <p id="ui-subtitle">Aventura en Vallverda • Exploración Sostenible</p>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <div class="lang-switch">
+                <button id="btn-es" class="lang-btn active" onclick="setLang('es')">ES</button>
+                <button id="btn-va" class="lang-btn" onclick="setLang('va')">VA</button>
+            </div>
+            <button id="btn-sound" class="icon-btn" onclick="toggleSound()" title="Audio">🔊</button>
+            <button id="btn-restart" class="icon-btn" onclick="openStartScreen()">🔄</button>
+        </div>
+    </header>
+
+    <!-- =========================================================
+         ÁREA PRINCIPAL DEL MUNDO EXPLORABLE (CANVAS + HUD)
+         ========================================================= -->
+    <div id="game-wrapper">
+        <canvas id="world-canvas"></canvas>
+
+        <!-- Notificación flotante -->
+        <div id="toast-banner">¡Objeto recogido!</div>
+
+        <!-- Registro de Misiones (Quest Log) -->
+        <aside class="hud-top-left">
+            <div class="hud-header-row">
+                <span id="ui-quest-title">🧭 MISIONES ODS</span>
+                <span id="ui-quest-count">0 / 4</span>
+            </div>
+            <div class="sustainability-bar-bg">
+                <div id="ui-planet-bar" class="sustainability-bar-fill" style="width: 15%;"></div>
+            </div>
+            <ul id="ui-quest-list" class="quest-list">
+                <!-- Generado por JS -->
+            </ul>
+        </aside>
+
+        <!-- Minimapa en tiempo real -->
+        <aside class="minimap-box">
+            <canvas id="minimap-canvas" width="110" height="82"></canvas>
+            <div id="ui-minimap-label" class="minimap-caption">MAPA VALLVERDA</div>
+        </aside>
+
+        <!-- Inventario de Herramientas ODS -->
+        <div class="hud-inventory">
+            <span id="ui-inv-label" class="inv-label">Mochila:</span>
+            <div class="inv-slots">
+                <div id="slot-filter" class="inv-slot" title="Kit Filtros Agua"></div>
+                <div id="slot-solar" class="inv-slot" title="Paneles Solares"></div>
+                <div id="slot-books" class="inv-slot" title="Tablets y Rampa"></div>
+                <div id="slot-seeds" class="inv-slot" title="Semillas y Riego"></div>
+            </div>
+        </div>
+
+        <!-- Prompt de acción cercana -->
+        <div id="interact-prompt">
+            <span>💬</span> <span id="interact-prompt-text">Pulsa ESPACIO o Hablar</span>
+        </div>
+
+        <!-- Controles Táctiles / Ratón (Cruceta + Botón Acción) -->
+        <div class="touch-controls">
+            <div class="dpad">
+                <div></div>
+                <button class="dpad-btn" id="pad-up">▲</button>
+                <div></div>
+                <button class="dpad-btn" id="pad-left">◀</button>
+                <div style="background:rgba(15,23,42,0.5); border-radius:8px;"></div>
+                <button class="dpad-btn" id="pad-right">▶</button>
+                <div></div>
+                <button class="dpad-btn" id="pad-down">▼</button>
+                <div></div>
+            </div>
+            <button class="action-btn" onclick="triggerInteraction()">
+                <span style="font-size:20px;">💬</span>
+                <span id="ui-action-btn">HABLAR</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL 1: PANTALLA DE INICIO Y SELECCIÓN DE PERSONAJE
+         ========================================================= -->
+    <div id="modal-start" class="modal-overlay">
+        <div class="modal-card start-hero">
+            <div class="badge-ods" id="start-badge">🌍 ODS GAME WORLD • MODO AVENTURA</div>
+            <h2 id="start-title">Aventura en Vallverda</h2>
+            <p id="start-desc">
+                Explora libremente el pueblo de <strong>Vallverda</strong>, recoge herramientas sostenibles por el mapa y ayuda a tus vecinos a resolver 4 retos reales de los <strong>Objetivos de Desarrollo Sostenible (ODS)</strong>. ¡Observa cómo el pueblo cobra vida con tus acciones!
+            </p>
+
+            <div class="char-selector">
+                <div id="char-girl" class="char-option selected" onclick="selectCharacter('girl')">
+                    <div class="char-avatar-preview">👧🏽</div>
+                    <div class="char-name" id="char-girl-name">Alex (Exploradora)</div>
+                </div>
+                <div id="char-boy" class="char-option" onclick="selectCharacter('boy')">
+                    <div class="char-avatar-preview">👦🏻</div>
+                    <div class="char-name" id="char-boy-name">Marc (Explorador)</div>
+                </div>
+            </div>
+
+            <div class="controls-hint" id="start-controls-hint">
+                🎮 <strong>Controles:</strong> Usa <strong>WASD / Flechas</strong> (o la cruceta táctil) para caminar y <strong>ESPACIO / ENTER</strong> (o el botón Hablar) para interactuar.
+            </div>
+
+            <button class="primary-btn" onclick="startAdventure()">
+                🚀 <span id="start-btn-text">¡Comenzar Aventura en Vallverda!</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL 2: DIÁLOGO RPG Y RETO EDUCATIVO ODS
+         ========================================================= -->
+    <div id="modal-dialog" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="rpg-dialog-header">
+                <div id="dlg-portrait" class="npc-portrait"></div>
+                <div class="npc-meta">
+                    <div id="dlg-ods" class="ods-tag">ODS 6 • AGUA LIMPIA</div>
+                    <h3 id="dlg-name">Guarda Forestal Clara</h3>
+                </div>
+            </div>
+
+            <div id="dlg-body" class="rpg-text">
+                Texto del personaje...
+            </div>
+
+            <!-- Pregunta / Decisión del reto (cuando el jugador ya tiene el objeto) -->
+            <div id="dlg-quiz-area" class="hidden">
+                <p id="dlg-question" style="font-weight:800; font-size:14px; margin-bottom:10px; color:#fbbf24;">
+                    Pregunta del reto:
+                </p>
+                <div id="dlg-options" class="quiz-options"></div>
+            </div>
+
+            <!-- Dato real ONU (se muestra tras resolver la misión) -->
+            <div id="dlg-fact-box" class="onu-fact-box hidden">
+                <span class="onu-fact-title" id="dlg-fact-title">🧠 ¿Sabías que...? (Dato ONU)</span>
+                <span id="dlg-fact-text">Dato educativo...</span>
+            </div>
+
+            <button id="dlg-close-btn" class="primary-btn" onclick="closeDialog()">
+                <span id="dlg-close-text">Entendido, ¡vamos allá!</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL 3: PANTALLA DE VICTORIA E INFORME PARA CLASE (AO)
+         ========================================================= -->
+    <div id="modal-win" class="modal-overlay hidden">
+        <div class="modal-card start-hero">
+            <div style="font-size: 54px; margin-bottom: 6px;">🏆🌍</div>
+            <div class="badge-ods" id="win-badge">¡VALLVERDA 100% SOSTENIBLE!</div>
+            <h2 id="win-title">¡Has completado ODS Game World!</h2>
+            <p id="win-desc">
+                Gracias a tu exploración y decisiones, el río vuelve a estar cristalino, la energía es limpia, la escuela es inclusiva y el huerto florece.
+            </p>
+
+            <ul id="win-summary-list" class="summary-list"></ul>
+
+            <div class="btn-row">
+                <button class="primary-btn" style="flex:1;" onclick="copyClassReport()">
+                    📋 <span id="win-copy-btn">Copiar Informe para Clase (AO)</span>
+                </button>
+                <button class="secondary-btn" onclick="openStartScreen()">
+                    🔄 <span id="win-replay-btn">Jugar de nuevo</span>
+                </button>
+            </div>
+            <p id="win-copy-msg" style="color:#34d399; font-size:12px; font-weight:700; margin-top:10px; display:none;">
+                ¡Informe copiado al portapapeles! Listo para pegar en tu documento.
+            </p>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MOTOR DEL JUEGO 2D TOP-DOWN RPG (JAVASCRIPT PURO)
+         ========================================================= -->
+    <script>
+        /**
+         * 1. CONFIGURACIÓN GLOBAL E IDIOMA (ESPAÑOL / VALENCIÀ)
+         */
+        let lang = 'es';
+        let soundOn = true;
+        let selectedChar = 'girl';
+        let gamePaused = true;
+
+        const TEXTS = {
+            es: {
+                subtitle: "Aventura en Vallverda • Exploración Sostenible",
+                questTitle: "🧭 MISIONES ODS",
+                minimapLabel: "MAPA VALLVERDA",
+                invLabel: "Mochila:",
+                actionBtn: "HABLAR",
+                startBadge: "🌍 ODS GAME WORLD • MODO AVENTURA",
+                startTitle: "Aventura en Vallverda",
+                startDesc: "Explora libremente el pueblo de <strong>Vallverda</strong>, recoge herramientas sostenibles por el mapa y ayuda a tus vecinos a resolver 4 retos reales de los <strong>Objetivos de Desarrollo Sostenible (ODS)</strong>. ¡Observa cómo el pueblo cobra vida con tus acciones!",
+                girlName: "Alex (Exploradora)",
+                boyName: "Marc (Explorador)",
+                controlsHint: "🎮 <strong>Controles:</strong> Usa <strong>WASD / Flechas</strong> (o la cruceta táctil) para caminar y <strong>ESPACIO / ENTER</strong> (o el botón Hablar) para interactuar.",
+                startBtn: "¡Comenzar Aventura en Vallverda!",
+                promptTalk: "Pulsa ESPACIO o Hablar con",
+                promptPick: "Pulsa ESPACIO para recoger",
+                promptMayor: "Pulsa ESPACIO para hablar con la Alcaldesa",
+                factTitle: "🧠 ¿Sabías que...? (Dato Real ONU)",
+                btnContinue: "Continuar explorando",
+                btnComplete: "¡Misión ODS Completada! ✨",
+                winBadge: "¡VALLVERDA 100% SOSTENIBLE!",
+                winTitle: "¡Has salvado Vallverda!",
+                winDesc: "Has demostrado que la tecnología, la cooperación y el compromiso ciudadano pueden transformar nuestro entorno. Aquí tienes tu resumen de logros ODS:",
+                winCopyBtn: "Copiar Informe para Clase (AO)",
+                winReplayBtn: "Jugar de nuevo",
+                winCopyMsg: "¡Informe copiado al portapapeles! Listo para pegar en tu trabajo de Aplicaciones Ofimáticas.",
+                toastItem: "Recogido:",
+                toastMissionDone: "¡Misión completada! El pueblo ha mejorado 🌍",
+                mayorName: "Alcaldesa Elena (Ayuntamiento)",
+                mayorOds: "ODS 17 • ALIANZAS PARA LOGRAR LOS OBJETIVOS",
+                mayorPending: "¡Hola! Bienvenido/a a Vallverda. Nuestro pueblo sufre varios problemas ambientales y sociales. Explora las 4 zonas (Río, Escuela, Fábrica y Huerto), recoge las herramientas necesarias y ayuda a nuestros vecinos. ¡Cuando acabes, vuelve a verme!",
+                mayorDone: "¡Increíble trabajo! Gracias a ti, Vallverda es hoy un ejemplo mundial de sostenibilidad. El agua está limpia, la energía es renovable, la escuela es accesible y no desperdiciamos alimentos. ¡Vamos a celebrar tu informe final!"
+            },
+            va: {
+                subtitle: "Aventura a Vallverda • Exploració Sostenible",
+                questTitle: "🧭 MISSIONS ODS",
+                minimapLabel: "MAPA VALLVERDA",
+                invLabel: "Motxilla:",
+                actionBtn: "PARLAR",
+                startBadge: "🌍 ODS GAME WORLD • MODE AVENTURA",
+                startTitle: "Aventura a Vallverda",
+                startDesc: "Explora lliurement el poble de <strong>Vallverda</strong>, arreplega eines sostenibles pel mapa i ajuda el veïnat a resoldre 4 reptes reals dels <strong>Objectius de Desenvolupament Sostenible (ODS)</strong>. Observa com el poble cobra vida amb les teues accions!",
+                girlName: "Àlex (Exploradora)",
+                boyName: "Marc (Explorador)",
+                controlsHint: "🎮 <strong>Controls:</strong> Usa <strong>WASD / Fletxes</strong> (o la creueta tàctil) per a caminar i <strong>ESPAI / ENTER</strong> (o el botó Parlar) per a interactuar.",
+                startBtn: "Començar Aventura a Vallverda!",
+                promptTalk: "Prem ESPAI o Parlar amb",
+                promptPick: "Prem ESPAI per a arreplegar",
+                promptMayor: "Prem ESPAI per a parlar amb l'Alcaldessa",
+                factTitle: "🧠 Sabies que...? (Dada Real ONU)",
+                btnContinue: "Continuar explorant",
+                btnComplete: "Missió ODS Completada! ✨",
+                winBadge: "VALLVERDA 100% SOSTENIBLE!",
+                winTitle: "Has salvat Vallverda!",
+                winDesc: "Has demostrat que la tecnologia, la cooperació i el compromís ciutadà poden transformar el nostre entorn. Ací tens el teu resum d'assoliments ODS:",
+                winCopyBtn: "Copiar Informe per a Classe (AO)",
+                winReplayBtn: "Jugar de nou",
+                winCopyMsg: "Informe copiat al porta-retalls! Llest per a apegar al teu treball d'Aplicacions Ofimàtiques.",
+                toastItem: "Arreplegat:",
+                toastMissionDone: "Missió completada! El poble ha millorat 🌍",
+                mayorName: "Alcaldessa Elena (Ajuntament)",
+                mayorOds: "ODS 17 • ALIANCES PER A ACONSEGUIR ELS OBJECTIUS",
+                mayorPending: "Hola! Benvingut/da a Vallverda. El nostre poble pateix diversos problemes ambientals i socials. Explora les 4 zones (Riu, Escola, Fàbrica i Hort), arreplega les eines necessàries i ajuda els nostres veïns. Quan acabes, torna a vore'm!",
+                mayorDone: "Increïble treball! Gràcies a tu, Vallverda és hui un exemple mundial de sostenibilitat. L'aigua està neta, l'energia és renovable, l'escola és accessible i no desaprofitem aliments. Anem a celebrar el teu informe final!"
+            }
+        };
+
+        /**
+         * 2. SINTETIZADOR DE SONIDO WEB AUDIO API (SIN ARCHIVOS EXTERNOS)
+         */
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSfx(type) {
+            if (!soundOn) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioCtx();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+                if (type === 'step') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(140, now);
+                    gain.gain.setValueAtTime(0.03, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'pickup') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'talk') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(380, now);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'success') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                    osc.start(now);
+                    osc.stop(now + 0.55);
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundOn = !soundOn;
+            document.getElementById('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+        }
+
+        /**
+         * 3. DEFINICIÓN DEL MUNDO (1600x1200 px), MISIONES, NPCS Y OBJETOS
+         */
+        const WORLD_W = 1600;
+        const WORLD_H = 1200;
+
+        // Estado del jugador
+        const player = {
+            x: 800,
+            y: 520,
+            w: 28,
+            h: 34,
+            speed: 3.6,
+            dir: 'down',
+            walkFrame: 0,
+            stepTimer: 0
+        };
+
+        // Obstáculos sólidos (edificios, muros, árboles grandes)
+        const colliders = [
+            // Ayuntamiento (Centro Norte)
+            { x: 710, y: 240, w: 180, h: 120 },
+            // Escuela (Zona Oeste / Centro-Izquierda)
+            { x: 220, y: 420, w: 190, h: 130 },
+            // Fábrica (Zona Noreste)
+            { x: 1160, y: 230, w: 220, h: 140 },
+            // Mercado / Caseta Huerto (Zona Sureste)
+            { x: 1180, y: 780, w: 170, h: 110 },
+            // Río (Barrera de agua en zona Suroeste con puente en y=830..910)
+            { x: 340, y: 650, w: 90, h: 180 },
+            { x: 340, y: 910, w: 90, h: 290 }
+        ];
+
+        // 4 Misiones ODS completas
+        let missions = [];
+
+        function initMissionsData() {
+            missions = [
+                {
+                    id: 'river',
+                    odsCode: 'ODS 6 y 15',
+                    shortEs: 'Río y Bosque Limpios',
+                    shortVa: 'Riu i Bosc Nets',
+                    npcNameEs: 'Guarda Forestal Clara',
+                    npcNameVa: 'Guarda Forestal Clara',
+                    npcColor: '#16a34a',
+                    npcHair: '#78350f',
+                    npcX: 290,
+                    npcY: 790,
+                    itemId: 'filter',
+                    itemIcon: '🧪',
+                    itemNameEs: 'Kit Bio-Filtros de Agua',
+                    itemNameVa: 'Kit Bio-Filtres d\'Aigua',
+                    itemX: 140,
+                    itemY: 1030,
+                    itemCollected: false,
+                    completed: false,
+                    needItemEs: "¡Qué desastre! Alguien ha tirado plásticos y residuos al río de Vallverda, dañando a los peces y árboles. Busca el <strong>Kit de Bio-Filtros</strong> cerca de la orilla sur del bosque y tráemelo para limpiar el agua.",
+                    needItemVa: "Quin desastre! Algú ha tirat plàstics i residus al riu de Vallverda, danyant els peixos i arbres. Busca el <strong>Kit de Bio-Filtres</strong> prop de la riba sud del bosc i porta-me'l per a netejar l'aigua.",
+                    hasItemEs: "¡Genial, has encontrado el Kit de Bio-Filtros! Antes de activarlo, dime: ¿cuál es la mejor medida para mantener limpio nuestro río y bosque a largo plazo?",
+                    hasItemVa: "Genial, has trobat el Kit de Bio-Filtres! Abans d'activar-lo, digues-me: quina és la millor mesura per a mantindre net el nostre riu i bosc a llarg termini?",
+                    questionEs: "¿Cómo protegemos mejor el agua y los ecosistemas? (ODS 6 y 15)",
+                    questionVa: "Com protegim millor l'aigua i els ecosistemes? (ODS 6 i 15)",
+                    options: [
+                        {
+                            es: "Depurar aguas, recoger residuos y reforestar la ribera",
+                            va: "Depurar aigües, arreplegar residus i reforestar la ribera",
+                            correct: true
+                        },
+                        {
+                            es: "Enterrar los plásticos bajo la tierra del bosque",
+                            va: "Soterrar els plàstics baix la terra del bosc",
+                            correct: false
+                        }
+                    ],
+                    factEs: "Más del 80% de las aguas residuales resultantes de actividades humanas se vierten en los ríos o el mar sin ningún tratamiento, lo que provoca su contaminación.",
+                    factVa: "Més del 80% de les aigües residuals resultants d'activitats humanes s'aboquen als rius o la mar sense cap tractament, la qual cosa provoca la seua contaminació.",
+                    summaryEs: "ODS 6 y 15: Limpieza del río de Vallverda con bio-filtros y protección del bosque.",
+                    summaryVa: "ODS 6 i 15: Neteja del riu de Vallverda amb bio-filtres i protecció del bosc."
+                },
+                {
+                    id: 'school',
+                    odsCode: 'ODS 4 y 10',
+                    shortEs: 'Escuela Inclusiva y Digital',
+                    shortVa: 'Escola Inclusiva i Digital',
+                    npcNameEs: 'Profesora Laura',
+                    npcNameVa: 'Professora Laura',
+                    npcColor: '#2563eb',
+                    npcHair: '#1e293b',
+                    npcX: 315,
+                    npcY: 575,
+                    itemId: 'books',
+                    itemIcon: '💻',
+                    itemNameEs: 'Tablets Recicladas y Rampa',
+                    itemNameVa: 'Tauletes Reciclades i Rampa',
+                    itemX: 540,
+                    itemY: 360,
+                    itemCollected: false,
+                    completed: false,
+                    needItemEs: "¡Hola! En la escuela de Vallverda queremos que ningún estudiante se quede atrás. Nos faltan ordenadores para las familias con menos recursos y una rampa de acceso. ¿Puedes recoger la caja de <strong>Tablets Recicladas y Materiales</strong> junto a la plaza?",
+                    needItemVa: "Hola! A l'escola de Vallverda volem que cap estudiant es quede arrere. Ens falten ordinadors per a les famílies amb menys recursos i una rampa d'accés. Pots arreplegar la caixa de <strong>Tauletes Reciclades i Materials</strong> vora la plaça?",
+                    hasItemEs: "¡Muchas gracias por traer el material! Con estas tablets reutilizadas y la rampa, toda la clase podrá aprender tecnología. ¿Por qué es tan importante reducir la brecha digital?",
+                    hasItemVa: "Moltes gràcies per portar el material! Amb aquestes tauletes reutilitzades i la rampa, tota la classe podrà aprendre tecnologia. Per què és tan important reduir la bretxa digital?",
+                    questionEs: "¿Qué logra una educación inclusiva y accesible? (ODS 4 y 10)",
+                    questionVa: "Què aconsegueix una educació inclusiva i accessible? (ODS 4 i 10)",
+                    options: [
+                        {
+                            es: "Garantiza igualdad de oportunidades para todas las personas",
+                            va: "Garanteix igualtat d'oportunitats per a totes les persones",
+                            correct: true
+                        },
+                        {
+                            es: "Solo beneficia a quienes ya tienen ordenadores en casa",
+                            va: "Només beneficia els qui ja tenen ordinadors a casa",
+                            correct: false
+                        }
+                    ],
+                    factEs: "La educación de calidad y el acceso equitativo a la tecnología reducen las desigualdades y empoderan a los jóvenes para crear soluciones en su comunidad.",
+                    factVa: "L'educació de qualitat i l'accés equitatiu a la tecnologia redueixen les desigualtats i empoderen els joves per a crear solucions a la seua comunitat.",
+                    summaryEs: "ODS 4 y 10: Reducción de la brecha digital y mejora de accesibilidad en la escuela.",
+                    summaryVa: "ODS 4 i 10: Reducció de la bretxa digital i millora d'accessibilitat a l'escola."
+                },
+                {
+                    id: 'energy',
+                    odsCode: 'ODS 7 y 13',
+                    shortEs: 'Energía Solar y Aire Limpio',
+                    shortVa: 'Energia Solar i Aire Net',
+                    npcNameEs: 'Ingeniera Sofía',
+                    npcNameVa: 'Enginyera Sofia',
+                    npcColor: '#d97706',
+                    npcHair: '#b45309',
+                    npcX: 1250,
+                    npcY: 400,
+                    itemId: 'solar',
+                    itemIcon: '☀️',
+                    itemNameEs: 'Paneles Solares y Eólicos',
+                    itemNameVa: 'Panells Solars i Eòlics',
+                    itemX: 1470,
+                    itemY: 220,
+                    itemCollected: false,
+                    completed: false,
+                    needItemEs: "¡Mira todo ese humo negro! La antigua fábrica funciona con carbón y contamina el aire de Vallverda. He encargado unos <strong>Paneles Solares de Alta Eficiencia</strong> en el almacén este. ¿Me ayudas a traerlos?",
+                    needItemVa: "Mira tot eixe fum negre! L'antiga fàbrica funciona amb carbó i contamina l'aire de Vallverda. He encarregat uns <strong>Panells Solars d'Alta Eficiència</strong> al magatzem est. M'ajudes a portar-los?",
+                    hasItemEs: "¡Fantástico! Vamos a instalar los paneles solares en el tejado y activar los aerogeneradores. ¿Cuál es la principal ventaja de las energías renovables frente al carbón?",
+                    hasItemVa: "Fantàstic! Instal·larem els panells solars a la teulada i activarem els aerogeneradors. Quina és el principal avantatge de les energies renovables enfront del carbó?",
+                    questionEs: "¿Por qué apostar por energía solar y eólica? (ODS 7 y 13)",
+                    questionVa: "Per què apostar per energia solar i eòlica? (ODS 7 i 13)",
+                    options: [
+                        {
+                            es: "No emiten gases de efecto invernadero y son inagotables",
+                            va: "No emeten gasos d'efecte d'hivernacle i són inesgotables",
+                            correct: true
+                        },
+                        {
+                            es: "Producen más humo pero de otro color",
+                            va: "Produeixen més fum però d'un altre color",
+                            correct: false
+                        }
+                    ],
+                    factEs: "La energía solar y eólica ya son las fuentes de electricidad más baratas en la mayor parte del mundo y clave para frenar el cambio climático.",
+                    factVa: "L'energia solar i eòlica ja són les fonts d'electricitat més barates en la major part del món i clau per a frenar el canvi climàtic.",
+                    summaryEs: "ODS 7 y 13: Transición a energía solar y eólica en la fábrica, eliminando emisiones.",
+                    summaryVa: "ODS 7 i 13: Transició a energia solar i eòlica a la fàbrica, eliminant emissions."
+                },
+                {
+                    id: 'farm',
+                    odsCode: 'ODS 2 y 12',
+                    shortEs: 'Huerto y Consumo Responsable',
+                    shortVa: 'Hort i Consum Responsable',
+                    npcNameEs: 'Agricultor Mateo',
+                    npcNameVa: 'Agricultor Mateu',
+                    npcColor: '#65a30d',
+                    npcHair: '#57534e',
+                    npcX: 1130,
+                    npcY: 910,
+                    itemId: 'seeds',
+                    itemIcon: '🌱',
+                    itemNameEs: 'Semillas y Riego por Goteo',
+                    itemNameVa: 'Llavors i Reg per Degoteig',
+                    itemX: 930,
+                    itemY: 1050,
+                    itemCollected: false,
+                    completed: false,
+                    needItemEs: "Nuestro huerto comunitario está seco y en el mercado se tira mucha comida en buen estado. Necesito el kit de <strong>Semillas Autóctonas y Riego por Goteo</strong> que está cerca del camino sur. ¿Puedes recogerlo?",
+                    needItemVa: "El nostre hort comunitari està sec i al mercat es tira molta menjar en bon estat. Necessite el kit de <strong>Llavors Autòctones i Reg per Degoteig</strong> que està prop del camí sud. Pots arreplegar-lo?",
+                    hasItemEs: "¡Con estas semillas y el riego por goteo ahorraremos muchísima agua! Además, repartiremos los excedentes del mercado. ¿Qué hábito ayuda más al consumo responsable?",
+                    hasItemVa: "Amb aquestes llavors i el reg per degoteig estalviarem moltíssima aigua! A més, repartirem els excedents del mercat. Quin hàbit ajuda més al consum responsable?",
+                    questionEs: "¿Qué acción combate el desperdicio y cuida el planeta? (ODS 2 y 12)",
+                    questionVa: "Quina acció combat el desaprofitament i cuida el planeta? (ODS 2 i 12)",
+                    options: [
+                        {
+                            es: "Consumir productos locales de temporada y aprovechar la comida",
+                            va: "Consumir productes locals de temporada i aprofitar el menjar",
+                            correct: true
+                        },
+                        {
+                            es: "Comprar alimentos envasados en plástico traídos de muy lejos",
+                            va: "Comprar aliments envasats en plàstic portats de molt lluny",
+                            correct: false
+                        }
+                    ],
+                    factEs: "Un tercio de todos los alimentos producidos en el mundo se pierde o desperdicia cada año. Planificar compras y compostar reduce nuestra huella ecológica.",
+                    factVa: "Un terç de tots els aliments produïts al món es perd o desaprofita cada any. Planificar compres i compostar redueix la nostra petjada ecològica.",
+                    summaryEs: "ODS 2 y 12: Riego eficiente en el huerto comunitario y aprovechamiento alimentario.",
+                    summaryVa: "ODS 2 i 12: Reg eficient a l'hort comunitari i aprofitament alimentari."
+                }
+            ];
+        }
+
+        // Alcaldesa (NPC central en el Ayuntamiento)
+        const mayorNPC = {
+            x: 800,
+            y: 385,
+            color: '#7c3aed',
+            hair: '#fde047'
+        };
+
+        /**
+         * 4. CONTROLES (TECLADO + RATÓN / TÁCTIL)
+         */
+        const keys = { up: false, down: false, left: false, right: false };
+
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (k === 'w' || e.key === 'ArrowUp') keys.up = true;
+            if (k === 's' || e.key === 'ArrowDown') keys.down = true;
+            if (k === 'a' || e.key === 'ArrowLeft') keys.left = true;
+            if (k === 'd' || e.key === 'ArrowRight') keys.right = true;
+
+            if (e.key === ' ' || e.key === 'Enter') {
+                if (!document.getElementById('modal-dialog').classList.contains('hidden')) {
+                    // Si el botón de cerrar diálogo está visible, cerrarlo
+                    const closeBtn = document.getElementById('dlg-close-btn');
+                    if (!closeBtn.classList.contains('hidden')) {
+                        closeDialog();
+                    }
+                } else if (!gamePaused) {
+                    triggerInteraction();
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if (k === 'w' || e.key === 'ArrowUp') keys.up = false;
+            if (k === 's' || e.key === 'ArrowDown') keys.down = false;
+            if (k === 'a' || e.key === 'ArrowLeft') keys.left = false;
+            if (k === 'd' || e.key === 'ArrowRight') keys.right = false;
+        });
+
+        // Vincular botones táctiles D-Pad
+        function bindDpad(id, dirKey) {
+            const btn = document.getElementById(id);
+            const start = (e) => { e.preventDefault(); keys[dirKey] = true; btn.classList.add('pressed'); };
+            const end = (e) => { e.preventDefault(); keys[dirKey] = false; btn.classList.remove('pressed'); };
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', end);
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend', end);
+        }
+        bindDpad('pad-up', 'up');
+        bindDpad('pad-down', 'down');
+        bindDpad('pad-left', 'left');
+        bindDpad('pad-right', 'right');
+
+        /**
+         * 5. LÓGICA DE INTERACCIÓN CON OBJETOS Y NPCS
+         */
+        let activeNearbyTarget = null; // { type: 'item' | 'npc' | 'mayor', data: ... }
+
+        function findNearbyInteractable() {
+            const reach = 68;
+
+            // 1. Comprobar objetos recogibles en el suelo
+            for (const m of missions) {
+                if (!m.itemCollected) {
+                    const dist = Math.hypot(player.x - m.itemX, player.y - m.itemY);
+                    if (dist < reach) return { type: 'item', data: m };
+                }
+            }
+
+            // 2. Comprobar NPCs de misión
+            for (const m of missions) {
+                const dist = Math.hypot(player.x - m.npcX, player.y - m.npcY);
+                if (dist < reach) return { type: 'npc', data: m };
+            }
+
+            // 3. Comprobar Alcaldesa
+            const distMayor = Math.hypot(player.x - mayorNPC.x, player.y - mayorNPC.y);
+            if (distMayor < reach) return { type: 'mayor', data: mayorNPC };
+
+            return null;
+        }
+
+        function triggerInteraction() {
+            if (gamePaused) return;
+            const target = findNearbyInteractable();
+            if (!target) return;
+
+            if (target.type === 'item') {
+                const m = target.data;
+                m.itemCollected = true;
+                playSfx('pickup');
+                updateHUD();
+                const itemName = lang === 'es' ? m.itemNameEs : m.itemNameVa;
+                showToast(`${TEXTS[lang].toastItem} ${m.itemIcon} ${itemName}`);
+            } else if (target.type === 'npc') {
+                openMissionDialog(target.data);
+            } else if (target.type === 'mayor') {
+                openMayorDialog();
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-banner');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+
+        /**
+         * 6. CUADROS DE DIÁLOGO RPG Y RETOS EDUCATIVOS
+         */
+        function openMissionDialog(m) {
+            gamePaused = true;
+            keys.up = keys.down = keys.left = keys.right = false;
+            playSfx('talk');
+
+            const t = TEXTS[lang];
+            const isEs = lang === 'es';
+
+            document.getElementById('dlg-ods').textContent = m.odsCode;
+            document.getElementById('dlg-name').textContent = isEs ? m.npcNameEs : m.npcNameVa;
+            document.getElementById('dlg-portrait').innerHTML = createNpcSvgPortrait(m.npcColor, m.npcHair);
+
+            const quizArea = document.getElementById('dlg-quiz-area');
+            const factBox = document.getElementById('dlg-fact-box');
+            const closeBtn = document.getElementById('dlg-close-btn');
+
+            quizArea.classList.add('hidden');
+            factBox.classList.add('hidden');
+            closeBtn.classList.remove('hidden');
+
+            if (m.completed) {
+                // Misión ya resuelta
+                document.getElementById('dlg-body').innerHTML = isEs
+                    ? `¡Gracias de nuevo! Mira cómo ha mejorado esta zona gracias a tu ayuda en el <strong>${m.odsCode}</strong>.`
+                    : `Gràcies de nou! Mira com ha millorat aquesta zona gràcies a la teua ajuda en l'<strong>${m.odsCode}</strong>.`;
+                document.getElementById('dlg-fact-title').textContent = t.factTitle;
+                document.getElementById('dlg-fact-text').textContent = isEs ? m.factEs : m.factVa;
+                factBox.classList.remove('hidden');
+                document.getElementById('dlg-close-text').textContent = t.btnContinue;
+            } else if (!m.itemCollected) {
+                // Aún no ha recogido el objeto necesario
+                document.getElementById('dlg-body').innerHTML = isEs ? m.needItemEs : m.needItemVa;
+                document.getElementById('dlg-close-text').textContent = t.btnContinue;
+            } else {
+                // Tiene el objeto: mostrar reto de pregunta crítica ODS
+                document.getElementById('dlg-body').innerHTML = isEs ? m.hasItemEs : m.hasItemVa;
+                document.getElementById('dlg-question').textContent = isEs ? m.questionEs : m.questionVa;
+
+                const optsContainer = document.getElementById('dlg-options');
+                optsContainer.innerHTML = '';
+
+                m.options.forEach((opt) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'quiz-btn';
+                    btn.textContent = isEs ? opt.es : opt.va;
+                    btn.onclick = () => {
+                        if (opt.correct) {
+                            btn.classList.add('correct');
+                            m.completed = true;
+                            playSfx('success');
+                            updateHUD();
+                            showToast(t.toastMissionDone);
+
+                            // Desactivar botones y mostrar dato real ONU
+                            Array.from(optsContainer.children).forEach(b => b.disabled = true);
+                            document.getElementById('dlg-fact-title').textContent = t.factTitle;
+                            document.getElementById('dlg-fact-text').textContent = isEs ? m.factEs : m.factVa;
+                            factBox.classList.remove('hidden');
+                            document.getElementById('dlg-close-text').textContent = t.btnComplete;
+                            closeBtn.classList.remove('hidden');
+                        } else {
+                            btn.classList.add('wrong');
+                            playSfx('talk');
+                        }
+                    };
+                    optsContainer.appendChild(btn);
+                });
+
+                quizArea.classList.remove('hidden');
+                closeBtn.classList.add('hidden'); // Obliga a responder el reto para completar
+            }
+
+            document.getElementById('modal-dialog').classList.remove('hidden');
+        }
+
+        function openMayorDialog() {
+            gamePaused = true;
+            keys.up = keys.down = keys.left = keys.right = false;
+            playSfx('talk');
+
+            const t = TEXTS[lang];
+            const allDone = missions.every(m => m.completed);
+
+            document.getElementById('dlg-ods').textContent = t.mayorOds;
+            document.getElementById('dlg-name').textContent = t.mayorName;
+            document.getElementById('dlg-portrait').innerHTML = createNpcSvgPortrait(mayorNPC.color, mayorNPC.hair);
+            document.getElementById('dlg-quiz-area').classList.add('hidden');
+            document.getElementById('dlg-fact-box').classList.add('hidden');
+            document.getElementById('dlg-close-btn').classList.remove('hidden');
+
+            if (allDone) {
+                document.getElementById('dlg-body').innerHTML = t.mayorDone;
+                document.getElementById('dlg-close-text').textContent = "🏆 " + (lang === 'es' ? "Ver Informe Final ODS" : "Veure Informe Final ODS");
+                document.getElementById('dlg-close-btn').onclick = () => {
+                    document.getElementById('modal-dialog').classList.add('hidden');
+                    openWinScreen();
+                };
+            } else {
+                document.getElementById('dlg-body').innerHTML = t.mayorPending;
+                document.getElementById('dlg-close-text').textContent = t.btnContinue;
+                document.getElementById('dlg-close-btn').onclick = closeDialog;
+            }
+
+            document.getElementById('modal-dialog').classList.remove('hidden');
+        }
+
+        function closeDialog() {
+            document.getElementById('modal-dialog').classList.add('hidden');
+            document.getElementById('dlg-close-btn').onclick = closeDialog;
+            gamePaused = false;
+
+            // Si todas las misiones están completas, comprobar si mostramos victoria automática o avisamos
+            if (missions.every(m => m.completed)) {
+                setTimeout(() => {
+                    openWinScreen();
+                }, 400);
+            }
+        }
+
+        function createNpcSvgPortrait(shirtColor, hairColor) {
+            return `<svg width="48" height="48" viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="22" fill="#1e293b"/>
+                <rect x="12" y="30" width="24" height="16" rx="8" fill="${shirtColor}"/>
+                <circle cx="24" cy="20" r="10" fill="#fed7aa"/>
+                <path d="M14 18 Q24 6 34 18" fill="${hairColor}"/>
+                <circle cx="20" cy="20" r="1.5" fill="#0f172a"/>
+                <circle cx="28" cy="20" r="1.5" fill="#0f172a"/>
+                <path d="M21 24 Q24 27 27 24" stroke="#0f172a" stroke-width="1.5" fill="none"/>
+            </svg>`;
+        }
+
+        /**
+         * 7. ACTUALIZACIÓN DE HUD, MOCHILA E INFORME FINAL
+         */
+        function updateHUD() {
+            const t = TEXTS[lang];
+            const isEs = lang === 'es';
+
+            const completedCount = missions.filter(m => m.completed).length;
+            document.getElementById('ui-quest-count').textContent = `${completedCount} / ${missions.length}`;
+
+            const pct = 15 + (completedCount / missions.length) * 85;
+            document.getElementById('ui-planet-bar').style.width = `${pct}%`;
+
+            // Lista de misiones
+            const list = document.getElementById('ui-quest-list');
+            list.innerHTML = '';
+            missions.forEach(m => {
+                const li = document.createElement('li');
+                li.className = `quest-item ${m.completed ? 'done' : ''}`;
+                const icon = m.completed ? '✅' : (m.itemCollected ? '❗' : '⬜');
+                li.textContent = `${icon} ${isEs ? m.shortEs : m.shortVa}`;
+                list.appendChild(li);
+            });
+
+            // Mochila de objetos
+            missions.forEach(m => {
+                const slot = document.getElementById(`slot-${m.id === 'river' ? 'filter' : m.id === 'energy' ? 'solar' : m.id === 'school' ? 'books' : 'seeds'}`);
+                if (m.itemCollected) {
+                    slot.classList.add('filled');
+                    slot.textContent = m.itemIcon;
+                } else {
+                    slot.classList.remove('filled');
+                    slot.textContent = '';
+                }
+            });
+        }
+
+        function openWinScreen() {
+            gamePaused = true;
+            playSfx('success');
+            const isEs = lang === 'es';
+
+            const list = document.getElementById('win-summary-list');
+            list.innerHTML = '';
+            missions.forEach(m => {
+                const li = document.createElement('li');
+                li.textContent = `✅ ${isEs ? m.summaryEs : m.summaryVa}`;
+                list.appendChild(li);
+            });
+
+            document.getElementById('win-copy-msg').style.display = 'none';
+            document.getElementById('modal-win').classList.remove('hidden');
+        }
+
+        function copyClassReport() {
+            const isEs = lang === 'es';
+            const lines = missions.map(m => `- ${isEs ? m.summaryEs : m.summaryVa}`).join('\n');
+            const report = isEs
+                ? `🌍 INFORME DE AVENTURA: ODS GAME WORLD (VALLVERDA)\nExplorador/a: ${selectedChar === 'girl' ? 'Alex' : 'Marc'}\nEstado del Pueblo: 100% Sostenible (4/4 Misiones ODS Completadas)\n\nLogros alcanzados:\n${lines}`
+                : `🌍 INFORME D'AVENTURA: ODS GAME WORLD (VALLVERDA)\nExplorador/a: ${selectedChar === 'girl' ? 'Àlex' : 'Marc'}\nEstat del Poble: 100% Sostenible (4/4 Missions ODS Completades)\n\nAssoliments aconseguits:\n${lines}`;
+
+            const ta = document.createElement('textarea');
+            ta.value = report;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+
+            playSfx('pickup');
+            document.getElementById('win-copy-msg').style.display = 'block';
+        }
+
+        /**
+         * 8. CAMBIO DE IDIOMA Y FLUJO DE INICIO
+         */
+        function setLang(newLang) {
+            lang = newLang;
+            document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+            document.getElementById('btn-va').classList.toggle('active', lang === 'va');
+
+            const t = TEXTS[lang];
+            document.getElementById('ui-subtitle').textContent = t.subtitle;
+            document.getElementById('ui-quest-title').textContent = t.questTitle;
+            document.getElementById('ui-minimap-label').textContent = t.minimapLabel;
+            document.getElementById('ui-inv-label').textContent = t.invLabel;
+            document.getElementById('ui-action-btn').textContent = t.actionBtn;
+
+            document.getElementById('start-badge').textContent = t.startBadge;
+            document.getElementById('start-title').textContent = t.startTitle;
+            document.getElementById('start-desc').innerHTML = t.startDesc;
+            document.getElementById('char-girl-name').textContent = t.girlName;
+            document.getElementById('char-boy-name').textContent = t.boyName;
+            document.getElementById('start-controls-hint').innerHTML = t.controlsHint;
+            document.getElementById('start-btn-text').textContent = t.startBtn;
+
+            document.getElementById('win-badge').textContent = t.winBadge;
+            document.getElementById('win-title').textContent = t.winTitle;
+            document.getElementById('win-desc').textContent = t.winDesc;
+            document.getElementById('win-copy-btn').textContent = t.winCopyBtn;
+            document.getElementById('win-replay-btn').textContent = t.winReplayBtn;
+            document.getElementById('win-copy-msg').textContent = t.winCopyMsg;
+
+            if (missions.length > 0) updateHUD();
+        }
+
+        function selectCharacter(type) {
+            selectedChar = type;
+            document.getElementById('char-girl').classList.toggle('selected', type === 'girl');
+            document.getElementById('char-boy').classList.toggle('selected', type === 'boy');
+            playSfx('talk');
+        }
+
+        function openStartScreen() {
+            gamePaused = true;
+            document.getElementById('modal-win').classList.add('hidden');
+            document.getElementById('modal-dialog').classList.add('hidden');
+            document.getElementById('modal-start').classList.remove('hidden');
+        }
+
+        function startAdventure() {
+            initMissionsData();
+            player.x = 800;
+            player.y = 510;
+            player.dir = 'down';
+            updateHUD();
+
+            document.getElementById('modal-start').classList.add('hidden');
+            document.getElementById('modal-win').classList.add('hidden');
+            gamePaused = false;
+            playSfx('pickup');
+        }
+
+        /**
+         * 9. MOTOR DE RENDERIZADO 2D EN HTML5 CANVAS + MINIMAPA
+         */
+        const canvas = document.getElementById('world-canvas');
+        const ctx = canvas.getContext('2d');
+        const miniCanvas = document.getElementById('minimap-canvas');
+        const miniCtx = miniCanvas.getContext('2d');
+
+        function resizeCanvas() {
+            const wrapper = document.getElementById('game-wrapper');
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function checkCollision(nx, ny) {
+            const margin = 12;
+            if (nx < 30 || nx > WORLD_W - 30 || ny < 40 || ny > WORLD_H - 30) return true;
+
+            for (const c of colliders) {
+                if (
+                    nx + margin > c.x &&
+                    nx - margin < c.x + c.w &&
+                    ny + margin > c.y &&
+                    ny - margin < c.y + c.h
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function updatePlayer() {
+            if (gamePaused) return;
+
+            let dx = 0;
+            let dy = 0;
+            if (keys.up) { dy -= 1; player.dir = 'up'; }
+            if (keys.down) { dy += 1; player.dir = 'down'; }
+            if (keys.left) { dx -= 1; player.dir = 'left'; }
+            if (keys.right) { dx += 1; player.dir = 'right'; }
+
+            if (dx !== 0 || dy !== 0) {
+                const len = Math.hypot(dx, dy);
+                dx = (dx / len) * player.speed;
+                dy = (dy / len) * player.speed;
+
+                if (!checkCollision(player.x + dx, player.y)) player.x += dx;
+                if (!checkCollision(player.x, player.y + dy)) player.y += dy;
+
+                player.walkFrame += 0.18;
+                player.stepTimer++;
+                if (player.stepTimer % 18 === 0) playSfx('step');
+            } else {
+                player.walkFrame = 0;
+            }
+
+            // Actualizar indicador contextual si hay algo cerca
+            activeNearbyTarget = findNearbyInteractable();
+            const promptEl = document.getElementById('interact-prompt');
+            const promptText = document.getElementById('interact-prompt-text');
+            const t = TEXTS[lang];
+
+            if (activeNearbyTarget) {
+                promptEl.style.display = 'flex';
+                if (activeNearbyTarget.type === 'item') {
+                    const name = lang === 'es' ? activeNearbyTarget.data.itemNameEs : activeNearbyTarget.data.itemNameVa;
+                    promptText.textContent = `${t.promptPick} ${name}`;
+                } else if (activeNearbyTarget.type === 'npc') {
+                    const name = lang === 'es' ? activeNearbyTarget.data.npcNameEs : activeNearbyTarget.data.npcNameVa;
+                    promptText.textContent = `${t.promptTalk} ${name}`;
+                } else {
+                    promptText.textContent = t.promptMayor;
+                }
+            } else {
+                promptEl.style.display = 'none';
+            }
+        }
+
+        function drawWorld(time) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Cámara centrada en el jugador con límites del mapa
+            const camX = Math.max(0, Math.min(WORLD_W - canvas.width, player.x - canvas.width / 2));
+            const camY = Math.max(0, Math.min(WORLD_H - canvas.height, player.y - canvas.height / 2));
+
+            ctx.save();
+            ctx.translate(-camX, -camY);
+
+            // 1. Pradera base
+            ctx.fillStyle = '#15803d';
+            ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+            // Patrón sutil de hierba
+            ctx.fillStyle = '#166534';
+            for (let gx = 40; gx < WORLD_W; gx += 120) {
+                for (let gy = 40; gy < WORLD_H; gy += 120) {
+                    ctx.fillRect(gx, gy, 18, 6);
+                    ctx.fillRect(gx + 55, gy + 60, 14, 5);
+                }
+            }
+
+            // 2. Caminos de tierra del pueblo
+            ctx.fillStyle = '#d6d3d1';
+            // Avenida central horizontal
+            ctx.fillRect(220, 560, 1140, 75);
+            // Avenida central vertical hacia Ayuntamiento
+            ctx.fillRect(760, 360, 80, 560);
+            // Camino hacia el río (Suroeste)
+            ctx.fillRect(220, 845, 560, 65);
+            // Camino hacia el huerto (Sureste)
+            ctx.fillRect(760, 880, 480, 65);
+            // Camino hacia fábrica (Noreste)
+            ctx.fillRect(1210, 370, 70, 230);
+
+            // Plaza central empedrada
+            ctx.fillStyle = '#e7e5e4';
+            ctx.beginPath();
+            ctx.roundRect(680, 460, 240, 200, 24);
+            ctx.fill();
+
+            // Fuente sostenible en la plaza
+            ctx.fillStyle = '#0284c7';
+            ctx.beginPath();
+            ctx.arc(800, 560, 28, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // 3. ZONA RÍO (ODS 6) - Cambia de marrón contaminado a azul cristalino al completar misión
+            const riverClean = missions[0] && missions[0].completed;
+            ctx.fillStyle = riverClean ? '#0ea5e9' : '#78350f';
+            ctx.fillRect(340, 650, 90, 550);
+
+            // Ondas de agua animadas
+            ctx.strokeStyle = riverClean ? '#bae6fd' : '#a16207';
+            ctx.lineWidth = 3;
+            const waveOffset = Math.sin(time * 0.004) * 8;
+            for (let wy = 680; wy < 1180; wy += 60) {
+                ctx.beginPath();
+                ctx.moveTo(355 + waveOffset, wy);
+                ctx.lineTo(405 + waveOffset, wy);
+                ctx.stroke();
+            }
+
+            // Puente de madera sobre el río
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(330, 830, 110, 80);
+            ctx.strokeStyle = '#451a03';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(330, 830, 110, 80);
+
+            // Si el río está sucio, dibujar manchas y basura flotante
+            if (!riverClean) {
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(360, 720, 14, 10);
+                ctx.fillStyle = '#facc15';
+                ctx.beginPath();
+                ctx.arc(395, 960, 7, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Peces felices cuando el río está limpio
+                ctx.fillStyle = '#fb923c';
+                ctx.beginPath();
+                ctx.ellipse(385 + waveOffset, 740, 8, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 4. ZONA HUERTO COMUNITARIO (ODS 2 y 12)
+            const farmDone = missions[3] && missions[3].completed;
+            ctx.fillStyle = '#713f12';
+            ctx.beginPath();
+            ctx.roundRect(960, 960, 320, 160, 14);
+            ctx.fill();
+
+            // Surcos de cultivo
+            for (let row = 0; row < 4; row++) {
+                const ry = 980 + row * 35;
+                ctx.fillStyle = farmDone ? '#22c55e' : '#a16207';
+                ctx.fillRect(980, ry, 280, 14);
+                if (farmDone) {
+                    // Hortalizas y flores
+                    for (let cx = 995; cx < 1250; cx += 35) {
+                        ctx.fillStyle = row % 2 === 0 ? '#ef4444' : '#facc15';
+                        ctx.beginPath();
+                        ctx.arc(cx, ry + 7, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            // 5. EDIFICIOS DEL PUEBLO
+            // A) Ayuntamiento (Centro Norte)
+            drawBuilding(710, 240, 180, 120, '#4f46e5', '#312e81', lang === 'es' ? 'AYUNTAMIENTO' : 'AJUNTAMENT');
+
+            // B) Escuela (Oeste) + Rampa accesible al completar misión 2
+            const schoolDone = missions[1] && missions[1].completed;
+            drawBuilding(220, 420, 190, 130, '#0284c7', '#075985', lang === 'es' ? 'ESCUELA ODS' : 'ESCOLA ODS');
+            if (schoolDone) {
+                // Rampa verde de accesibilidad
+                ctx.fillStyle = '#34d399';
+                ctx.fillRect(255, 550, 38, 24);
+                ctx.fillStyle = '#022c22';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText('♿', 267, 566);
+            }
+
+            // C) Fábrica (Noreste) + Paneles Solares y Aerogeneradores al completar misión 3
+            const energyDone = missions[2] && missions[2].completed;
+            drawBuilding(1160, 230, 220, 140, '#475569', '#1e293b', lang === 'es' ? 'ECO-FÁBRICA' : 'ECO-FÀBRICA');
+
+            // Chimenea
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(1330, 185, 24, 50);
+
+            if (!energyDone) {
+                // Humo negro contaminante
+                const smokeY = (time * 0.04) % 45;
+                ctx.fillStyle = 'rgba(30, 41, 59, 0.75)';
+                ctx.beginPath();
+                ctx.arc(1342, 175 - smokeY, 14, 0, Math.PI * 2);
+                ctx.arc(1352, 155 - smokeY, 18, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Paneles solares azules en el tejado
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(1180, 245, 55, 32);
+                ctx.fillRect(1245, 245, 55, 32);
+                ctx.strokeStyle = '#e0f2fe';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(1180, 245, 55, 32);
+                ctx.strokeRect(1245, 245, 55, 32);
+
+                // Aerogenerador girando junto a la fábrica
+                drawWindTurbine(1425, 340, time);
+            }
+
+            // D) Mercado Local (Sureste)
+            drawBuilding(1180, 780, 170, 110, '#d97706', '#92400e', lang === 'es' ? 'MERCADO LOCAL' : 'MERCAT LOCAL');
+
+            // 6. ÁRBOLES DECORATIVOS (Más frondosos al limpiar el río/bosque)
+            const treePositions = [
+                [120, 220], [180, 700], [100, 880], [220, 1080],
+                [520, 220], [600, 750], [560, 1060], [1020, 240],
+                [1480, 520], [1480, 820], [1450, 1080]
+            ];
+            treePositions.forEach(([tx, ty]) => drawTree(tx, ty, riverClean));
+
+            // 7. OBJETOS RECOGIBLES EN EL MAPA
+            missions.forEach(m => {
+                if (!m.itemCollected) {
+                    const floatY = Math.sin(time * 0.005) * 5;
+                    // Halo brillante
+                    ctx.fillStyle = 'rgba(251, 191, 36, 0.28)';
+                    ctx.beginPath();
+                    ctx.arc(m.itemX, m.itemY + floatY, 22, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.font = '24px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(m.itemIcon, m.itemX, m.itemY + 8 + floatY);
+                }
+            });
+
+            // 8. NPCS Y ALCALDESA
+            drawCharacter(mayorNPC.x, mayorNPC.y, mayorNPC.color, mayorNPC.hair, 'down', 0, true, missions.every(m => m.completed) ? '🏆' : '⭐');
+
+            missions.forEach(m => {
+                const marker = m.completed ? '✅' : (m.itemCollected ? '❗' : '!');
+                drawCharacter(m.npcX, m.npcY, m.npcColor, m.npcHair, 'down', 0, true, marker);
+            });
+
+            // 9. JUGADOR PRINCIPAL
+            const pColor = selectedChar === 'girl' ? '#ec4899' : '#10b981';
+            const pHair = selectedChar === 'girl' ? '#78350f' : '#1e293b';
+            drawCharacter(player.x, player.y, pColor, pHair, player.dir, player.walkFrame, false, null);
+
+            ctx.restore();
+
+            // Dibujar Minimapa
+            drawMinimap();
+        }
+
+        function drawBuilding(x, y, w, h, wallColor, roofColor, label) {
+            // Sombra
+            ctx.fillStyle = 'rgba(0,0,0,0.28)';
+            ctx.fillRect(x + 8, y + 10, w, h);
+
+            // Pared
+            ctx.fillStyle = wallColor;
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, 10);
+            ctx.fill();
+
+            // Tejado superior
+            ctx.fillStyle = roofColor;
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h * 0.45, [10, 10, 0, 0]);
+            ctx.fill();
+
+            // Puerta
+            ctx.fillStyle = '#fef3c7';
+            ctx.fillRect(x + w / 2 - 16, y + h - 34, 32, 34);
+
+            // Cartel
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, x + w / 2, y + h * 0.62);
+        }
+
+        function drawTree(x, y, lush) {
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 22, 18, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(x - 5, y, 10, 22);
+
+            ctx.fillStyle = lush ? '#22c55e' : '#16a34a';
+            ctx.beginPath();
+            ctx.arc(x, y - 8, 22, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawWindTurbine(x, y, time) {
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(x - 3, y - 70, 6, 70);
+
+            ctx.save();
+            ctx.translate(x, y - 70);
+            ctx.rotate(time * 0.004);
+            for (let i = 0; i < 3; i++) {
+                ctx.rotate((Math.PI * 2) / 3);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-4, -32);
+                ctx.lineTo(4, -32);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function drawCharacter(x, y, shirtColor, hairColor, dir, walkFrame, isNpc, marker) {
+            const bob = Math.abs(Math.sin(walkFrame)) * 3;
+
+            // Sombra en el suelo
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 16, 13, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cuerpo / Camiseta
+            ctx.fillStyle = shirtColor;
+            ctx.beginPath();
+            ctx.roundRect(x - 11, y - 4 - bob, 22, 18, 6);
+            ctx.fill();
+
+            // Cabeza
+            ctx.fillStyle = '#fed7aa';
+            ctx.beginPath();
+            ctx.arc(x, y - 14 - bob, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pelo
+            ctx.fillStyle = hairColor;
+            ctx.beginPath();
+            ctx.arc(x, y - 17 - bob, 11, Math.PI, Math.PI * 2);
+            ctx.fill();
+
+            // Ojos según dirección
+            ctx.fillStyle = '#0f172a';
+            if (dir !== 'up') {
+                const offsetX = dir === 'left' ? -3 : dir === 'right' ? 3 : 0;
+                ctx.beginPath();
+                ctx.arc(x - 3.5 + offsetX, y - 13 - bob, 1.6, 0, Math.PI * 2);
+                ctx.arc(x + 3.5 + offsetX, y - 13 - bob, 1.6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Marcador flotante encima de NPCs (! o ✅)
+            if (isNpc && marker) {
+                const floatMarker = Math.sin(performance.now() * 0.006) * 3;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.beginPath();
+                ctx.arc(x, y - 38 + floatMarker, 11, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.font = 'bold 13px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillText(marker, x, y - 33 + floatMarker);
+            }
+        }
+
+        function drawMinimap() {
+            const sx = miniCanvas.width / WORLD_W;
+            const sy = miniCanvas.height / WORLD_H;
+
+            miniCtx.fillStyle = '#065f46';
+            miniCtx.fillRect(0, 0, miniCanvas.width, miniCanvas.height);
+
+            // Río en minimapa
+            miniCtx.fillStyle = (missions[0] && missions[0].completed) ? '#38bdf8' : '#92400e';
+            miniCtx.fillRect(340 * sx, 650 * sy, 90 * sx, 550 * sy);
+
+            // Puntos de misión (Rojo pendiente / Verde resuelto)
+            missions.forEach(m => {
+                miniCtx.fillStyle = m.completed ? '#34d399' : '#f43f5e';
+                miniCtx.beginPath();
+                miniCtx.arc(m.npcX * sx, m.npcY * sy, 3.5, 0, Math.PI * 2);
+                miniCtx.fill();
+
+                if (!m.itemCollected) {
+                    miniCtx.fillStyle = '#fbbf24';
+                    miniCtx.fillRect(m.itemX * sx - 2, m.itemY * sy - 2, 4, 4);
+                }
+            });
+
+            // Jugador (Punto blanco brillante)
+            miniCtx.fillStyle = '#ffffff';
+            miniCtx.beginPath();
+            miniCtx.arc(player.x * sx, player.y * sy, 4, 0, Math.PI * 2);
+            miniCtx.fill();
+        }
+
+        /**
+         * 10. BUCLE PRINCIPAL DE ANIMACIÓN
+         */
+        function gameLoop(timestamp) {
+            updatePlayer();
+            drawWorld(timestamp);
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = function() {
+            resizeCanvas();
+            initMissionsData();
+            setLang('es');
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
